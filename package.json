@@ -1,0 +1,19 @@
+{
+  "name": "my_shirtstore",
+  "version": "1.0.0",
+  "description": "an app to track a shirt store",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "shirts"
+  ],
+  "author": "davidhartman00",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.13.3",
+    "express": "^4.13.3",
+    "mongoose": "^4.1.1"
+  }
+}

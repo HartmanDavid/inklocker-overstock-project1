@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.css">
+    <!-- <link rel="stylesheet" href="js/app.css" charset="utf-8"> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.js"></script>
+    <title>Shirt store</title>
+  </head>
+  <body>
+    <div class="logo">
+      <img src="http://inklocker.com/modules/core/img/brand/logo.png" id='main-logo'>
+    </div>
+
+    <h1>Good morning! Welcome to the Shirt store</h1>
+
+    <table class="table table-hover"> <!-- START of input form -->
+        <thead>
+          <tr>
+                <form id="shirt-select-form" class="form-inline" > <!-- added a Class of 'my-form'-->
+                  <div class="form-group">
+                    <th>
+                      <label for="inputSex">Sex</label>
+                      <select type="text" name="sex" class="form-control" id='inputSex'>  <!-- 1st selection -->
+                        <option>female</option>
+                        <option>male</option>
+                        <option>unisex</option>
+                      </select>
+                    </th>
+                    <th>
+                      <label for="inputDesign">Design</label>  <!-- 2nd selection-->
+                      <select type="text" name="design" class="form-control" id="inputDesign">
+                        <option>A123</option>
+                        <option>B456</option>
+                        <option>C789</option>
+                      </select>
+                    </th>
+                    <th>
+                      <label for="inputColor">Color</label>  <!-- 3rd selection-->
+                      <select type="text" name="color" class="form-control" id="inputColor">
+                        <option>blue</option>
+                        <option>purple</option>
+                        <option>white</option>
+                        <option>green</option>
+                        <option>yellow</option>
+                      </select>
+                    </th>
+                    <th>
+                      <label for="inputSize">Size</label>  <!-- 4th selection-->
+                      <select type="text" name="size" class="form-control" id="inputSize">
+                        <option>small</option>
+                        <option>medium</option>
+                        <option>large</option>
+                      </select>
+                    </th>
+                    <!-- <th>
+                      <label for="inputImage">Image</label>
+                      <select type="text" class="form-control" id="inputImage">
+                        <option>QXR</option>
+                        <option>GBA</option>
+                        <option>SOI</option>
+                      </select>
+                    </th> -->
+                    <th>
+                      <label for="inputImage">Quantity</label>  <!-- 6th but text field-->
+                      <input type="text" name="qty" class="form-control" id="inputQty">
+                        <!-- <option>QXR</option>
+                        <option>GBA</option>
+                        <option>SOI</option> -->
+                      </input>
+                    </th>
+                  </div>
+                  <th><input type="submit" class="btn btn-primary"></th>  <!-- change Button to a 'input' ...to submit to DB-->
+                  <!-- <input type="submit"> -->
+                </form>
+          </tr>
+        </thead>
+      </table> <!-- input form ends here -->
+
+      <table class="table table-hover">  <!-- START of DATA table-->
+        <!-- <thead>
+          <tr>
+            <th>Sex</th>
+            <th>Design</th>
+            <th>Color</th>
+            <th>Size</th>
+            <th>Image</th>
+            <th>Quantity</th>
+          </tr>
+        </thead> -->
+        <tbody class="results">
+          <!-- <tr >
+            <td>{{shirt.sex}}</td>
+            <td>{{shirt.design}}</td>
+            <td>{{shirt.color}}</td>
+            <td>{{shirt.size}}</td>
+            <td>{{shirt.image}}</td>
+            <td>{{shirt.quantity}}</td>
+          </tr> -->
+        </tbody>
+      </table>
+
+  </body>
+  <script type="text/javascript">
+    var ulResults = $('.results');
+    var shirtForm = $('#shirt-select-form');
+
+    shirtForm.on('submit', function(evt){
+      evt.preventDefault();
+      console.log('sex', evt.target.sex.value);
+      console.log('design', evt.target.design.value);
+      console.log('color', evt.target.color.value);
+      console.log('size', evt.target.size.value);
+      console.log('size', evt.target.qty.value);
+
+      $.ajax({
+        method: 'post'
+        , url   : 'http://localhost:3000/shirts'
+        , data  : JSON.stringify({
+            sex   : evt.target.sex.value,
+            design: evt.target.design.value,
+            color : evt.target.color.value,
+            size  : evt.target.size.value,
+            qty   : evt.target.qty.value,
+          })
+        , contentType: 'application/json; charset=UTF-8'
+        , dataType   : 'json'
+        , success: function(dataThatCameback){
+          console.log('this is what saved from POST', dataThatCameback);
+          ulResults.append(
+                '<tr> <td>' + dataThatCameback.sex + '</td>' +
+                '<td>' + dataThatCameback.design + '</td>' +
+                '<td>' + dataThatCameback.color + '</td>' +
+                '<td>' + dataThatCameback.size + '</td>' +
+                '<td>' + dataThatCameback.qty + '</td>' +
+                '<td> <button class="btn btn-info" id="EDIT' + dataThatCameback._id + '">' + "EDIT" + '</button> <button class="btn btn-danger" id="' + dataThatCameback._id + '">' + "x" + '</button> </td>' +
+                '</tr>'
+              );
+              $('#' + dataThatCameback._id).on('click', function(evt){
+                if( confirm("This will delete this shirt")){
+                  console.log(evt.target.id);
+                  $.ajax({
+                    method: 'delete'
+                    , url : 'http://localhost:3000/shirts/' + evt.target.id
+                    , success : function(dataThatCameback){
+                      // Removed it succesfully if dataThatCameback is {message: "succesfully deleted"}
+                      console.log(dataThatCameback);
+                      // Remove locally
+                      $('#' + evt.target.id).parent().parent().hide();
+                      console.log(evt.target.id);
+                    }
+
+                  });
+                }
+              });
+        }
+      });
+
+    });
+
+    $.ajax({
+      method: 'get'
+      , url : 'http://localhost:3000/shirts'
+      , success : function(dataThatCameback){
+        console.log(dataThatCameback);
+        dataThatCameback.forEach(function(el){
+          ulResults.append(
+            '<tr> <td>' + el.sex + '</td>' +
+            '<td>' + el.design + '</td>' +
+            '<td>' + el.color + '</td>' +
+            '<td>' + el.size + '</td>' +
+            '<td>' + el.qty + '</td>' +
+            '<td> <button class="btn btn-info" id="EDIT' + el._id + '">' + "EDIT" + '</button> <button class="btn btn-danger" id="' + el._id + '">' + "x" + '</button> </td>' +
+            '</tr>'
+          );
+
+          $('#' + el._id).on('click', function(evt){
+            if( confirm("This will delete this shirt")){
+              console.log(evt.target.id);
+              $.ajax({
+                method: 'delete'
+                , url : 'http://localhost:3000/shirts/' + evt.target.id
+                , success : function(dataThatCameback){
+                  // Removed it succesfully if dataThatCameback is {message: "succesfully deleted"}
+                  console.log(dataThatCameback);
+                  // Remove locally
+                  $('#' + evt.target.id).parent().parent().hide();
+                  console.log(evt.target.id);
+                }
+              });
+            }
+          });
+
+        });
+      }
+    });
+
+
+  </script>
+</html>
