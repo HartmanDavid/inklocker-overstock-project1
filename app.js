@@ -1,9 +1,16 @@
-var express = require('express'); // Get the library
-var bodyParser = require('body-parser'); // Lets use body parser
-var mongoose = require('mongoose'); // Get the mongoose library
+var express         = require('express'); // Get the library
+var mongoose        = require('mongoose'); // Get the mongoose library
+var bodyParser      = require('body-parser'); // Lets use body parser
+var methodOverride  = require('method-override'); //used to manipulate POST
+var path            = require('path'),
+    favicon         = require('serve-favicon'),
+    logger          = require('morgan'),
+    cookieParser    = require('cookie-parser');
 
 var app = express(); // Create app object
 // lets define a schema to be used with the Shirt model
+app.use(logger({path: "logfile.txt"}));
+
 var shirtSchema = mongoose.Schema({
  sex    : {type: String},// required: true},
  design : {type: String},// required: true},
@@ -24,6 +31,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function(someData){
  console.log('COOL! we are connected to mongo');
 });
+var router          = express.Router();
 
 // Let's put a shirt in the database
 Shirt.create({
@@ -32,26 +40,45 @@ Shirt.create({
   color : 'purple',
   size  : 'XL',
   qty   : 3
-  }, function(err,shirtThatGotSaved){
- if (err) {
-   //log the error so the developer understands there is an error
-   console.log('Error saving shirt', err);
-   alert('Error saving shirt', err);
-   // exit out of this function with return
-   return;
- }
- else {
-   console.log('successfully saved ' + shirtThatGotSaved);
- }
-});
+  },
+  function(err,shirtThatGotSaved){
+     if (err) {
+       //log the error so the developer understands there is an error
+       console.log('Error saving shirt', err);
+       // exit out of this function with return
+       return;
+     }
+     else {
+       console.log('successfully saved ' + shirtThatGotSaved);
+     }
+   }
+ );
 
+app.use(function(req, res, next){
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', "GET, POST, PUT, DELETE");
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type, Authorization");
+    next();
+});
 // Middleware
-app.use(function(request, response, next){
- console.log('request received %s %s ', request.method, request.url); // string interpolation
- next(); //continuation
-});
+// app.use(express.logger());
 
-app.use(bodyParser.json());
+// app.use(function(request, response, next){
+//  console.log('request received %s %s DDDD', request.method, request.url); // string interpolation
+//  console.log('rawHeaders request is 9999', request.rawHeaders, "this is the body BBBB", request.body); // string interpolation
+//  // console.log('connect request is 9999', request.connection); // string interpolation
+//  next(); //continuation
+// });
+
+router.use(bodyParser.urlencoded({ extended: true })); // *** THIS IS THE OLD LINE OF CODE ***app.use(bodyParser.json());
+router.use(methodOverride(function(req, res){
+      if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+        // look in urlencoded POST bodies and delete it
+        var method = req.body._method
+        delete req.body._method
+        return method
+      }
+}));
 
 app.get('/', function(request, response){
  response.sendFile(__dirname + '/index_jquery.html');
@@ -70,18 +97,20 @@ app.get('/shirts', function(request, response){
 
 // lets POST request - CREATE a new shirt through Postman
 app.post('/shirts', function(request,response){
- console.log(request.body);
+ console.log('this is the request: ',request.body);
  // Let's put a shirt in the database
  Shirt.create(request.body, function(err,shirtThatGotSaved){
    if (err) {
      //log the error so the developer understands there is an error
      console.log(err);
+     response.json(err)
      // exit out of this function with return
      return;
    }
    else {
      console.log('successfully saved ' + shirtThatGotSaved);
-     response.json(shirtThatGotSaved)
+     response.send(request.body);
+     response.json(shirtThatGotSaved);
    }
  });
 });
@@ -111,20 +140,35 @@ app.delete('/shirts/:id', function(request, response){
  });
 });
 
-// patch (jimmy did not show how to update a shirt)
-app.patch('/shirts/:id', function(request, response){
- var shirtToBeUpdated;
- shirts.forEach(function(el){
-   // debugger
-   if (el.id === Number(request.params.id)) {
-   console.log(request.params);
-   console.log('we found the shirt ' + el.name);
-   shirtToBeUpdated = shirts.indexOf(el);
-   console.log((shirts[shirtToBeUpdated]).name = "NEW BOOK NAME")
-   }
- });
- response.json(shirts);
+// PUT (jimmy did not show how to update a shirt)
+app.put('/shirts/:id', function(request, response){
+  Shirt.findById(request.params.id, function(err, shirt){
+    // response.json({'message':'thats all folks!'})
+    return response.json({'message': request.body})
+  })
+    // response.json({'message': request.params}
 });
+
+  //  , function(err, shirt){
+  //   if(err){
+  //     console.log(err);
+  //     return;
+  //   } else {
+  //
+  //   }
+
+
+
+ // shirts.forEach(function(el){
+ //   // debugger
+ //   if (el.id === Number(request.params.id)) {
+ //   console.log(request.params);
+ //   console.log('we found the shirt ' + el.name);
+ //   shirtToBeUpdated = shirts.indexOf(el);
+ //   console.log((shirts[shirtToBeUpdated]).name = "NEW SHIRT NAME")
+ //   }
+ // });
+ // response.json(shirts);
 
 // server
 app.listen(3000, function(){
